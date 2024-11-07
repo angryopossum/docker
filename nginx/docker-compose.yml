@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: mynginx
+    ports:
+      - "8080:80"  # Прокси для доступа к NGINX на порту 8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Ваш конфигурационный файл NGINX (опционально)
+  
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: mycadvisor
+    ports:
+      - "8082:8080"  # Прокси для доступа к cAdvisor на порту 8081
+    volumes:
+      - /:/rootfs:ro  # Подключение корневой файловой системы для мониторинга
+      - /var/run:/var/run:rw

@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8888:8888"  # Nginx слушает на порту 8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Конфигурация Nginx
+    depends_on:
+      - app  # Зависимость от приложения
+
+  varnish:
+    image: varnish:latest
+    ports:
+      - "80:80"  # Varnish слушает на порту 80
+    volumes:
+      - ./default.vcl:/etc/varnish/default.vcl  # Конфигурация Varnish
+        #    environment:
+        #  VARNISH_BACKEND_PORT: "80"  # Порт, на котором работает Nginx
+
+  app:
+    build: ./app  # Строим приложение Flask из папки ./app
+    expose:
+      - "8080"  # Внутренний порт Flask-приложения
+
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    restart: always
+    ports:
+      - "8080:8080"  # Порт, на якому доступний інтерфейс cAdvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    privileged: true
+
+networks:
+  default:
+    driver: bridge
+
