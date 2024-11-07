@@ -1,0 +1,67 @@
+version: '3.7'
+
+services:
+  # Elasticsearch: система для зберігання і пошуку логів
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=changeme  # Задайте пароль для суперкористувача
+        #      - xpack.security.enabled=false  
+    ports:
+      - "9200:9200"  # Порт для доступу до Elasticsearch
+    volumes:
+      - es_data:/usr/share/elasticsearch/data  # Зберігання даних на хості
+    networks:
+      - elk
+    restart: always
+
+  # Logstash: система для обробки і відправки логів в Elasticsearch
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.9.0
+    ports:
+      - "5044:5044"  # Порт для отримання логів (наприклад, через Filebeat)
+    environment:
+      - LOGSTASH_STARTUP_DELAY=5s
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  # Kibana: інтерфейс для візуалізації і аналізу логів
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.0
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_use
+      - ELASTICSEARCH_PASSWORD=q1w2e3r4 # Пароль користувача
+    ports:
+      - "5601:5601"  # Порт для доступу до інтерфейсу Kibana
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  # Nginx: сервер, з якого будемо збирати логи
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/logs:/var/log/nginx  # Зберігання логів Nginx на хості
+    ports:
+      - "8080:80"  # Порт для доступу до веб-сервера
+    networks:
+      - elk
+    restart: always
+
+volumes:
+  es_data:  # Персистентне зберігання даних Elasticsearch
+
+networks:
+  elk:
+    driver: bridge
+
