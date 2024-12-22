@@ -1,0 +1,5 @@
+kibana_user:
+  cluster: ["monitor", "q1w2e3r4"]
+  indices:
+    - names: ["*"]
+      privileges: ["read", "write", "monitor"]
